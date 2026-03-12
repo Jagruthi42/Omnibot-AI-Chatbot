@@ -206,7 +206,7 @@ function Bubble({ msg, color }) {
         display:"flex", alignItems:"center", justifyContent:"center",
         color:"#fff", fontFamily:"'Lora',serif", fontWeight:700, fontSize:"14px",
       }}>{me ? "U" : "Ω"}</div>
-      <div style={{ maxWidth:"70%", display:"flex", flexDirection:"column", alignItems: me ? "flex-end" : "flex-start" }}>
+      <div style={{ maxWidth:"82%", display:"flex", flexDirection:"column", alignItems: me ? "flex-end" : "flex-start" }}>
         <div style={{
           padding:"12px 16px",
           borderRadius: me ? "16px 4px 16px 16px" : "4px 16px 16px 16px",
@@ -429,7 +429,7 @@ export default function App() {
 
             <div style={{ padding:"26px 22px 18px", borderBottom:"1px solid #f0ede8" }}>
               <div style={{ fontFamily:"'Lora',serif", fontSize:"22px", fontWeight:700, letterSpacing:"-0.02em" }}>OmniBot</div>
-              <div style={{ fontFamily:"'DM Mono',monospace", fontSize:"9px", color:"#b0a898", letterSpacing:"0.18em", marginTop:"4px", textTransform:"uppercase" }}>omnibot.com</div>
+              <div style={{ fontFamily:"'DM Mono',monospace", fontSize:"9px", color:"#b0a898", letterSpacing:"0.18em", marginTop:"4px", textTransform:"uppercase" }}>General Purpose AI Assistant</div>
             </div>
 
             {/* Topic list — badge = query count for THAT topic */}
@@ -486,30 +486,32 @@ export default function App() {
 
           {/* Topbar */}
           <div style={{ padding:"0 24px", height:"62px", background:"#fff", borderBottom:"1px solid #e8e4dc", display:"flex", alignItems:"center", gap:"13px", boxShadow:"0 1px 6px rgba(0,0,0,.04)", flexShrink:0 }}>
-            <button className="gh" onClick={()=>setSidebar(s=>!s)} style={{ width:"34px", height:"34px", borderRadius:"8px", background:"transparent", border:"1px solid #e8e4dc", color:"#6b7280", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"15px", transition:"all .15s" }}>
+            {/* Sidebar toggle */}
+            <button className="gh" onClick={()=>setSidebar(s=>!s)} style={{ width:"34px", height:"34px", borderRadius:"8px", background:"transparent", border:"1px solid #e8e4dc", color:"#6b7280", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"15px", flexShrink:0, transition:"all .15s" }}>
               {sidebar?"‹":"☰"}
             </button>
-            <div style={{ width:"36px", height:"36px", borderRadius:"50%", background:T.bg, border:`1.5px solid ${T.color}44`, display:"flex", alignItems:"center", justifyContent:"center", color:T.color, fontSize:"16px", fontWeight:800 }}>{T.icon}</div>
-            <div>
-              <div style={{ fontFamily:"'Lora',serif", fontWeight:600, fontSize:"15px" }}>OmniBot — {T.label} Mode</div>
+            {/* Topic icon */}
+            <div style={{ width:"36px", height:"36px", borderRadius:"50%", background:T.bg, border:`1.5px solid ${T.color}44`, display:"flex", alignItems:"center", justifyContent:"center", color:T.color, fontSize:"16px", fontWeight:800, flexShrink:0 }}>{T.icon}</div>
+            {/* Title — flex:1 so it fills ALL remaining space, pushing buttons to the far right */}
+            <div style={{ flex:1, minWidth:0 }}>
+              <div style={{ fontFamily:"'Lora',serif", fontWeight:600, fontSize:"15px", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>OmniBot — {T.label} Mode</div>
               <div style={{ fontSize:"11px", color:"#6b7280", fontFamily:"'DM Mono',monospace", display:"flex", alignItems:"center", gap:"5px" }}>
-                <span style={{ width:"6px", height:"6px", borderRadius:"50%", background:"#10b981", display:"inline-block" }}/>
-                omnibot.com · {T.label} only · Isolated history
+                <span style={{ width:"6px", height:"6px", borderRadius:"50%", background:"#10b981", display:"inline-block", flexShrink:0 }}/>
+                {T.label} only · Isolated history
               </div>
             </div>
-            <div style={{ marginLeft:"auto", display:"flex", gap:"8px" }}>
-              <input ref={fileRef} type="file" accept="application/pdf" style={{ display:"none" }} onChange={onFile}/>
-              <button className="gh" onClick={()=>fileRef.current?.click()} style={{ padding:"7px 14px", borderRadius:"8px", background:pdfText?"#ecfdf5":"transparent", border:`1px solid ${pdfText?"#6ee7b7":"#e8e4dc"}`, color:pdfText?"#059669":"#6b7280", cursor:"pointer", fontSize:"12px", fontFamily:"'DM Mono',monospace", display:"flex", alignItems:"center", gap:"6px", transition:"all .15s" }}>
-                📄 {pdfState==="loading"?"Reading…":pdfText?"PDF Active":"Upload PDF"}
-              </button>
-              <button onClick={toggleMic} style={{ padding:"7px 14px", borderRadius:"8px", background:mic?"#fef2f2":"transparent", border:`1px solid ${mic?"#fca5a5":"#e8e4dc"}`, color:mic?"#dc2626":"#6b7280", cursor:"pointer", fontSize:"12px", fontFamily:"'DM Mono',monospace", display:"flex", alignItems:"center", gap:"6px", animation:mic?"_pulse 1.5s infinite":"none", transition:"all .15s" }}>
-                🎙 {mic?"Listening…":"Voice"}
-              </button>
-            </div>
+            {/* Action buttons — sit flush at the far right, no gap */}
+            <input ref={fileRef} type="file" accept="application/pdf" style={{ display:"none" }} onChange={onFile}/>
+            <button className="gh" onClick={()=>fileRef.current?.click()} style={{ padding:"7px 14px", borderRadius:"8px", background:pdfText?"#ecfdf5":"transparent", border:`1px solid ${pdfText?"#6ee7b7":"#e8e4dc"}`, color:pdfText?"#059669":"#6b7280", cursor:"pointer", fontSize:"12px", fontFamily:"'DM Mono',monospace", display:"flex", alignItems:"center", gap:"6px", flexShrink:0, transition:"all .15s" }}>
+              📄 {pdfState==="loading"?"Reading…":pdfText?"PDF Active":"Upload PDF"}
+            </button>
+            <button onClick={toggleMic} style={{ padding:"7px 14px", borderRadius:"8px", background:mic?"#fef2f2":"transparent", border:`1px solid ${mic?"#fca5a5":"#e8e4dc"}`, color:mic?"#dc2626":"#6b7280", cursor:"pointer", fontSize:"12px", fontFamily:"'DM Mono',monospace", display:"flex", alignItems:"center", gap:"6px", flexShrink:0, animation:mic?"_pulse 1.5s infinite":"none", transition:"all .15s" }}>
+              🎙 {mic?"Listening…":"Voice"}
+            </button>
           </div>
 
           {/* Chat area — renders msgs[topic], nothing else */}
-          <div style={{ flex:1, overflowY:"auto", padding:"26px 30px" }}>
+          <div style={{ flex:1, overflowY:"auto", padding:"26px 40px" }}>
 
             {/* Topic banner */}
             <div style={{ marginBottom:"20px", padding:"10px 16px", borderRadius:"10px", background:T.bg, border:`1px solid ${T.color}22`, display:"flex", alignItems:"center", gap:"10px" }}>
@@ -549,7 +551,7 @@ export default function App() {
           </div>
 
           {/* Input zone */}
-          <div style={{ padding:"14px 24px 18px", background:"#fff", borderTop:"1px solid #e8e4dc", flexShrink:0 }}>
+          <div style={{ padding:"14px 40px 18px", background:"#fff", borderTop:"1px solid #e8e4dc", flexShrink:0 }}>
 
             {/* Quick topic strip — coloured dot if topic has history */}
             <div style={{ display:"flex", gap:"6px", marginBottom:"10px", flexWrap:"wrap" }}>
@@ -583,7 +585,7 @@ export default function App() {
             </div>
 
             <div style={{ textAlign:"center", marginTop:"7px", fontSize:"10px", color:"#c5bfb6", fontFamily:"'DM Mono',monospace", letterSpacing:"0.06em" }}>
-              omnibot.com · {T.label} Mode · Groq LLaMA 3.3 70B · Final Year Project
+              OmniBot · {T.label} Mode · Groq LLaMA 3.3 70B · Final Year Project
             </div>
           </div>
         </div>
