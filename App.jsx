@@ -14,6 +14,7 @@ const TOPICS = [
   { id: "geography",  label: "Geography",  icon: "◉", color: "#7c3aed", bg: "#f5f3ff" },
   { id: "science",    label: "Science",    icon: "⬟", color: "#0891b2", bg: "#ecfeff" },
   { id: "technology", label: "Technology", icon: "◫", color: "#dc2626", bg: "#fef2f2" },
+  { id: "weather",    label: "Weather",    icon: "☁", color: "#0369a1", bg: "#f0f9ff" },
 ];
 
 /* ── System prompts — each topic strictly refuses off-topic questions ─────── */
@@ -53,6 +54,12 @@ const SYS = {
     "If the question is not technology-related, say: " +
     "I only answer technology questions in this mode. Please switch to the correct topic mode. " +
     "Never use **, ## or any markdown. Plain sentences only.",
+
+  weather:
+    "You are OmniBot in Weather mode. You will be given real-time weather data fetched from the Open-Meteo API for the city the user asked about. " +
+    "Interpret the weather data clearly and helpfully — describe temperature, conditions, humidity, wind, and give practical advice like what to wear or carry. " +
+    "If no weather data is provided, say you could not fetch the weather and ask the user to try again. " +
+    "Never use **, ## or any markdown. Plain sentences only.",
 };
 
 const HINTS = {
@@ -62,6 +69,7 @@ const HINTS = {
   geography:  ["What is the capital of Kazakhstan?", "Explain tectonic plates", "Largest country by area?"],
   science:    ["What is quantum entanglement?", "How does photosynthesis work?", "What is DNA made of?"],
   technology: ["What is machine learning?", "How does the internet work?", "Explain blockchain"],
+  weather:    ["Weather in Hyderabad", "What is the weather in London?", "Is it raining in Mumbai?"],
 };
 
 const WELCOME = {
@@ -71,6 +79,7 @@ const WELCOME = {
   geography:  "Welcome to Geography mode.\n\nI only answer questions about countries, capitals, climate, and physical geography.\n\nFor other topics please switch modes.",
   science:    "Welcome to Science mode.\n\nI only answer questions about physics, chemistry, biology, astronomy, and scientific phenomena.\n\nFor other topics please switch modes.",
   technology: "Welcome to Technology mode.\n\nI only answer questions about programming, AI, software, hardware, and digital technology.\n\nFor other topics please switch modes.",
+  weather:    "Welcome to Weather mode.\n\nAsk me the current weather for any city in the world — I fetch live data and give you temperature, conditions, humidity, wind speed, and practical tips.\n\nExamples: Weather in Hyderabad, Is it raining in London?",
 };
 
 /* ── Helpers ──────────────────────────────────────────────────────────────── */
@@ -148,6 +157,126 @@ async function groq(systemPrompt, topicHistory) {
   if (d.error) throw new Error(d.error.message);
   return stripMd(d.choices?.[0]?.message?.content ?? "No response.");
 }
+/* ── Weather: detect city from user message ───────────────────────────────── */
+function extractCity(text) {
+  // Patterns ordered from most specific to least specific
+  const patterns = [
+    /(?:weather|temperature|forecast|climate|raining|sunny|hot|cold|snowing|humid)\s+(?:in|at|for|of)\s+([\w\s]+?)(?:\?|$|,|today|now|currently)/i,
+    /(?:in|at|for|of)\s+([\w\s]+?)\s+(?:weather|temperature|forecast)/i,
+    /(?:what(?:'s| is)|how(?:'s| is)|get|show|tell me|give me|check)\s+(?:the\s+)?(?:weather|temperature|forecast|climate)\s+(?:in|at|for|of)?\s*([\w\s]+?)(?:\?|$|,)/i,
+    /(?:is it|will it)\s+(?:raining|sunny|hot|cold|snowing|cloudy)\s+(?:in|at|for)?\s*([\w\s]+?)(?:\?|$)/i,
+    /^(?:weather|temperature)\s+(?:in\s+)?([\w\s]+?)(?:\?|$)/i,
+    /(?:current|today(?:'s)?|now)\s+(?:weather|temperature)\s+(?:in|at|for)?\s*([\w\s]+?)(?:\?|$)/i,
+  ];
+  for (const p of patterns) {
+    const m = text.match(p);
+    if (m) {
+      const city = (m[1] || m[2] || "").trim().replace(/\s+/g," ");
+      // filter out stop words that aren't city names
+      const stop = ["the","a","an","is","in","at","for","of","like","today","now","currently","please","me","my"];
+      if (city.length > 1 && !stop.includes(city.toLowerCase())) return city;
+    }
+  }
+  return null;
+}
+
+/* ── Geocode city name → lat/lon using Open-Meteo geocoding API ───────────── */
+async function geocodeCity(city) {
+  const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`;
+  const r = await fetch(url);
+  const d = await r.json();
+  if (!d.results || d.results.length === 0) return null;
+  const { latitude, longitude, name, country } = d.results[0];
+  return { lat: latitude, lon: longitude, name, country };
+}
+
+/* ── Fetch weather from Open-Meteo (free, no API key needed) ─────────────── */
+async function fetchWeather(lat, lon) {
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+    `&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,wind_direction_10m` +
+    `&hourly=temperature_2m&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weather_code` +
+    `&timezone=auto&forecast_days=3`;
+  const r = await fetch(url);
+  return await r.json();
+}
+
+/* ── Map WMO weather code to description and emoji ───────────────────────── */
+function wmoDesc(code) {
+  const map = {
+    0:"Clear sky ☀️", 1:"Mainly clear 🌤️", 2:"Partly cloudy ⛅", 3:"Overcast ☁️",
+    45:"Foggy 🌫️", 48:"Icy fog 🌫️",
+    51:"Light drizzle 🌦️", 53:"Moderate drizzle 🌦️", 55:"Dense drizzle 🌧️",
+    61:"Slight rain 🌧️", 63:"Moderate rain 🌧️", 65:"Heavy rain 🌧️",
+    71:"Slight snow 🌨️", 73:"Moderate snow ❄️", 75:"Heavy snow ❄️",
+    77:"Snow grains ❄️",
+    80:"Slight showers 🌦️", 81:"Moderate showers 🌧️", 82:"Violent showers ⛈️",
+    85:"Snow showers 🌨️", 86:"Heavy snow showers ❄️",
+    95:"Thunderstorm ⛈️", 96:"Thunderstorm with hail ⛈️", 99:"Heavy thunderstorm ⛈️",
+  };
+  return map[code] || "Unknown conditions";
+}
+
+/* ── Format weather data into final user-facing message directly ──────────── */
+function formatWeatherData(geo, wx) {
+  const c = wx.current;
+  const d = wx.daily;
+  const windDir = ["N","NE","E","SE","S","SW","W","NW"][Math.round(c.wind_direction_10m/45)%8];
+  const condition = wmoDesc(c.weather_code);
+
+  // Practical advice based on conditions
+  let advice = "";
+  const code = c.weather_code;
+  const temp = c.temperature_2m;
+  if (code >= 95) advice = "There is a thunderstorm. Stay indoors and avoid travel if possible.";
+  else if (code >= 61) advice = "It is raining. Carry an umbrella before heading out.";
+  else if (code >= 51) advice = "There is light drizzle. A light jacket or umbrella is recommended.";
+  else if (code >= 71) advice = "It is snowing. Dress warmly and drive carefully.";
+  else if (temp >= 38) advice = "It is very hot. Stay hydrated and avoid being outside during peak afternoon hours.";
+  else if (temp >= 32) advice = "It is hot and sunny. Wear light clothing and carry water.";
+  else if (temp <= 10) advice = "It is cold. Wear a jacket or sweater when going out.";
+  else advice = "The weather is pleasant. A good day to be outdoors.";
+
+  let out = `Current weather in ${geo.name}, ${geo.country}\n\n`;
+  out += `${condition}\n`;
+  out += `Temperature: ${c.temperature_2m}°C (feels like ${c.apparent_temperature}°C)\n`;
+  out += `Humidity: ${c.relative_humidity_2m}%\n`;
+  out += `Wind: ${c.wind_speed_10m} km/h ${windDir}\n`;
+  if (c.precipitation > 0) out += `Precipitation: ${c.precipitation} mm\n`;
+  out += `\n${advice}\n\n`;
+  out += `3-Day Forecast\n`;
+  for (let i = 0; i < 3; i++) {
+    const date = new Date(d.time[i]).toLocaleDateString("en-IN",{weekday:"short",month:"short",day:"numeric"});
+    out += `${date}: ${wmoDesc(d.weather_code[i])}, High ${d.temperature_2m_max[i]}°C / Low ${d.temperature_2m_min[i]}°C`;
+    if (d.precipitation_sum[i] > 0) out += `, Rain ${d.precipitation_sum[i]}mm`;
+    out += "\n";
+  }
+  return out.trim();
+}
+
+/* ── Detect if a message is a weather query ──────────────────────────────── */
+function isWeatherQuery(text) {
+  return /weather|temperature|forecast|raining|sunny|hot outside|cold outside|humidity|wind speed|will it rain|how hot|how cold|climate today/i.test(text);
+}
+
+/* ── Main weather handler — fetches real data and returns it directly ─────── */
+async function handleWeather(userText) {
+  const city = extractCity(userText);
+  if (!city) {
+    return "Please mention a city name. For example: weather in Hyderabad, temperature in London, or is it raining in Mumbai?";
+  }
+  const geo = await geocodeCity(city);
+  if (!geo) {
+    return `I could not find a city called "${city}". Please check the spelling and try again. Example: weather in Hyderabad.`;
+  }
+  const wx = await fetchWeather(geo.lat, geo.lon);
+  if (!wx || !wx.current) {
+    return `I found ${geo.name} but the weather service is not responding right now. Please try again in a moment.`;
+  }
+  // Return directly formatted data — no LLaMA needed, always accurate
+  return formatWeatherData(geo, wx);
+}
+
+
 
 /* ── Sub-components ───────────────────────────────────────────────────────── */
 function Dots() {
@@ -362,8 +491,11 @@ export default function App() {
     }
 
     try {
-      /* 5. Call Groq with ONLY this topic's history */
-      const reply = await groq(sys, histories.current[tid]);
+      /* 5. Weather API only triggers in weather, general and geography modes. */
+      const weatherAllowed = tid === "weather" || tid === "general" || tid === "geography";
+      const reply = (weatherAllowed && isWeatherQuery(userText))
+        ? await handleWeather(userText)
+        : await groq(sys, histories.current[tid]);
 
       /* 6. Append AI reply to THIS topic's history ONLY */
       histories.current[tid] = [
