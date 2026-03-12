@@ -82,6 +82,59 @@ const WELCOME = {
   weather:    "Welcome to Weather mode.\n\nAsk me the current weather for any city in the world — I fetch live data and give you temperature, conditions, humidity, wind speed, and practical tips.\n\nExamples: Weather in Hyderabad, Is it raining in London?",
 };
 
+
+/* ── Theme definitions ────────────────────────────────────────────────────── */
+const THEMES = {
+  light: {
+    bg:          "#f8f7f4",
+    sidebar:     "#ffffff",
+    topbar:      "#ffffff",
+    inputZone:   "#ffffff",
+    inputBox:    "#f8f7f4",
+    border:      "#e8e4dc",
+    borderLight: "#f0ede8",
+    text:        "#1a1a2e",
+    textMuted:   "#6b7280",
+    textFaint:   "#b0a898",
+    textFooter:  "#c5bfb6",
+    bubble:      "#ffffff",
+    bubbleBorder:"#e8e4dc",
+    bubbleShadow:"0 2px 12px rgba(0,0,0,.07)",
+    botAvatar:   "#1a1a2e",
+    statsBox:    "#f8f7f4",
+    pillHover:   "#f3f4f6",
+    suggestHov:  "#f0ede8",
+    scrollThumb: "#d1cdc5",
+    placeholder: "#9ca3af",
+    shadow:      "0 1px 6px rgba(0,0,0,.04)",
+    sidebarShadow:"2px 0 10px rgba(0,0,0,.04)",
+  },
+  dark: {
+    bg:          "#0f1117",
+    sidebar:     "#1a1d27",
+    topbar:      "#1a1d27",
+    inputZone:   "#1a1d27",
+    inputBox:    "#232635",
+    border:      "#2e3245",
+    borderLight: "#252838",
+    text:        "#e8e9f0",
+    textMuted:   "#8b92a8",
+    textFaint:   "#555e7a",
+    textFooter:  "#434860",
+    bubble:      "#232635",
+    bubbleBorder:"#2e3245",
+    bubbleShadow:"0 2px 12px rgba(0,0,0,.3)",
+    botAvatar:   "#232635",
+    statsBox:    "#141720",
+    pillHover:   "#232635",
+    suggestHov:  "#2a2f44",
+    scrollThumb: "#3a3f55",
+    placeholder: "#555e7a",
+    shadow:      "0 1px 6px rgba(0,0,0,.3)",
+    sidebarShadow:"2px 0 10px rgba(0,0,0,.3)",
+  },
+};
+
 /* ── Helpers ──────────────────────────────────────────────────────────────── */
 function nowTime() {
   return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -293,29 +346,29 @@ function Dots() {
   );
 }
 
-function Pill({ t, active, onClick, count }) {
+function Pill({ t, active, onClick, count, th }) {
   return (
     <button onClick={onClick} style={{
       width:"100%", display:"flex", alignItems:"center", gap:"10px",
       padding:"9px 10px", marginBottom:"3px", borderRadius:"8px",
       background: active ? t.bg : "transparent",
       border:`1px solid ${active ? t.color+"30" : "transparent"}`,
-      color: active ? t.color : "#6b7280",
+      color: active ? t.color : (th?.textMuted ?? "#6b7280"),
       cursor:"pointer", transition:"all .18s",
       fontSize:"13.5px", fontFamily:"'DM Sans',sans-serif", fontWeight: active ? 600 : 400,
     }}>
       <span style={{
         width:"28px", height:"28px", borderRadius:"6px", flexShrink:0,
-        background: active ? t.color : "#f3f4f6",
+        background: active ? t.color : (th?.pillHover ?? "#f3f4f6"),
         display:"flex", alignItems:"center", justifyContent:"center",
-        color: active ? "#fff" : "#9ca3af", fontSize:"13px", fontWeight:700,
+        color: active ? "#fff" : (th?.textMuted ?? "#9ca3af"), fontSize:"13px", fontWeight:700,
         transition:"all .18s",
       }}>{t.icon}</span>
       <span style={{ flex:1 }}>{t.label}</span>
       {count > 0 && (
         <span style={{
-          background: active ? t.color : "#e5e7eb",
-          color: active ? "#fff" : "#6b7280",
+          background: active ? t.color : (th ? th.border : "#e5e7eb"),
+          color: active ? "#fff" : (th?.textMuted ?? "#6b7280"),
           borderRadius:"10px", fontSize:"10px", padding:"1px 7px",
           fontFamily:"'DM Mono',monospace", fontWeight:600, minWidth:"20px", textAlign:"center",
         }}>{count}</span>
@@ -324,14 +377,14 @@ function Pill({ t, active, onClick, count }) {
   );
 }
 
-function Bubble({ msg, color }) {
+function Bubble({ msg, color, th }) {
   const me = msg.role === "user";
   return (
     <div style={{ display:"flex", gap:"12px", marginBottom:"22px", flexDirection: me ? "row-reverse" : "row", animation:"_slide .28s ease-out" }}>
       <div style={{
         width:"34px", height:"34px", flexShrink:0, marginTop:"2px",
         borderRadius: me ? "10px" : "50%",
-        background: me ? color : "#1a1a2e",
+        background: me ? color : (th?.botAvatar ?? "#1a1a2e"),
         display:"flex", alignItems:"center", justifyContent:"center",
         color:"#fff", fontFamily:"'Lora',serif", fontWeight:700, fontSize:"14px",
       }}>{me ? "U" : "Ω"}</div>
@@ -339,14 +392,14 @@ function Bubble({ msg, color }) {
         <div style={{
           padding:"12px 16px",
           borderRadius: me ? "16px 4px 16px 16px" : "4px 16px 16px 16px",
-          background: me ? color : "#fff",
-          color: me ? "#fff" : "#1a1a2e",
+          background: me ? color : (th?.bubble ?? "#fff"),
+          color: me ? "#fff" : (th?.text ?? "#1a1a2e"),
           fontSize:"14px", lineHeight:"1.75",
-          boxShadow: me ? `0 4px 16px ${color}33` : "0 2px 12px rgba(0,0,0,.07)",
-          border: me ? "none" : "1px solid #e8e4dc",
+          boxShadow: me ? `0 4px 16px ${color}33` : (th?.bubbleShadow ?? "0 2px 12px rgba(0,0,0,.07)"),
+          border: me ? "none" : `1px solid ${th?.border ?? "#e8e4dc"}`,
           fontFamily:"'DM Sans',sans-serif", whiteSpace:"pre-wrap", wordBreak:"break-word",
         }}>{msg.content}</div>
-        <div style={{ fontSize:"10.5px", color:"#b0a898", marginTop:"5px", fontFamily:"'DM Mono',monospace", display:"flex", gap:"8px" }}>
+        <div style={{ fontSize:"10.5px", color:th?.textFaint ?? "#b0a898", marginTop:"5px", fontFamily:"'DM Mono',monospace", display:"flex", gap:"8px" }}>
           {msg.time}
           {msg.pdf && <span style={{ background:"#fef3c7", borderRadius:"4px", padding:"1px 7px", color:"#92400e" }}>PDF</span>}
         </div>
@@ -377,13 +430,15 @@ export default function App() {
   const [pdfState, setPdfState] = useState("idle"); // idle | loading | ready | error
   const [mic,      setMic]      = useState(false);
   const [sidebar,  setSidebar]  = useState(true);
+  const [dark,     setDark]     = useState(false);
 
   const endRef    = useRef(null);
   const fileRef   = useRef(null);
   const taRef     = useRef(null);
   const recogRef  = useRef(null);
 
-  const T = TOPICS.find(t => t.id === topic);
+  const T  = TOPICS.find(t => t.id === topic);
+  const TH = dark ? THEMES.dark : THEMES.light;
 
   /* Messages shown for the current topic */
   const msgs = allMsgs[topic] ?? [];
@@ -541,34 +596,34 @@ export default function App() {
     <>
       <style>{`
         *{box-sizing:border-box;margin:0;padding:0}
-        body{background:#f8f7f4}
+        body{background:${TH.bg};transition:background .3s}
         @keyframes _dot{0%,80%,100%{transform:translateY(0);opacity:.3}40%{transform:translateY(-6px);opacity:1}}
         @keyframes _slide{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
         @keyframes _pulse{0%,100%{opacity:1}50%{opacity:.4}}
         ::-webkit-scrollbar{width:4px}
-        ::-webkit-scrollbar-thumb{background:#d1cdc5;border-radius:4px}
+        ::-webkit-scrollbar-thumb{background:${TH.scrollThumb};border-radius:4px}
         textarea,button{font-family:'DM Sans',sans-serif;outline:none}
         textarea{resize:none}
-        .gh:hover{background:#f3f4f6!important}
-        .sq:hover{background:#f0ede8!important;border-color:#c5bfb6!important}
+        .gh:hover{background:${TH.pillHover}!important}
+        .sq:hover{background:${TH.suggestHov}!important;border-color:${TH.border}!important}
       `}</style>
 
-      <div style={{ display:"flex", height:"100vh", fontFamily:"'DM Sans',sans-serif", color:"#1a1a2e", overflow:"hidden" }}>
+      <div style={{ display:"flex", height:"100vh", fontFamily:"'DM Sans',sans-serif", color:TH.text, background:TH.bg, overflow:"hidden", transition:"background .3s,color .3s" }}>
 
         {/* ═══ SIDEBAR ═══ */}
         {sidebar && (
-          <div style={{ width:"252px", flexShrink:0, background:"#fff", borderRight:"1px solid #e8e4dc", display:"flex", flexDirection:"column", boxShadow:"2px 0 10px rgba(0,0,0,.04)" }}>
+          <div style={{ width:"252px", flexShrink:0, background:TH.sidebar, borderRight:`1px solid ${TH.border}`, display:"flex", flexDirection:"column", boxShadow:TH.sidebarShadow, transition:"background .3s" }}>
 
-            <div style={{ padding:"26px 22px 18px", borderBottom:"1px solid #f0ede8" }}>
-              <div style={{ fontFamily:"'Lora',serif", fontSize:"22px", fontWeight:700, letterSpacing:"-0.02em" }}>OmniBot</div>
-              <div style={{ fontFamily:"'DM Mono',monospace", fontSize:"9px", color:"#b0a898", letterSpacing:"0.18em", marginTop:"4px", textTransform:"uppercase" }}>General Purpose AI Assistant</div>
+            <div style={{ padding:"26px 22px 18px", borderBottom:`1px solid ${TH.borderLight}` }}>
+              <div style={{ fontFamily:"'Lora',serif", fontSize:"22px", fontWeight:700, letterSpacing:"-0.02em", color:TH.text }}>OmniBot</div>
+              <div style={{ fontFamily:"'DM Mono',monospace", fontSize:"9px", color:TH.textFaint, letterSpacing:"0.18em", marginTop:"4px", textTransform:"uppercase" }}>General Purpose AI Assistant</div>
             </div>
 
             {/* Topic list — badge = query count for THAT topic */}
             <div style={{ padding:"18px 14px", flex:1, overflowY:"auto" }}>
-              <div style={{ fontFamily:"'DM Mono',monospace", fontSize:"9px", color:"#b0a898", letterSpacing:"0.15em", textTransform:"uppercase", marginBottom:"10px", paddingLeft:"8px" }}>Topic Mode</div>
+              <div style={{ fontFamily:"'DM Mono',monospace", fontSize:"9px", color:TH.textFaint, letterSpacing:"0.15em", textTransform:"uppercase", marginBottom:"10px", paddingLeft:"8px" }}>Topic Mode</div>
               {TOPICS.map(t => (
-                <Pill key={t.id} t={t} active={topic===t.id} onClick={()=>switchTopic(t.id)} count={counts[t.id]} />
+                <Pill key={t.id} t={t} active={topic===t.id} onClick={()=>switchTopic(t.id)} count={counts[t.id]} th={TH} />
               ))}
             </div>
 
@@ -590,16 +645,16 @@ export default function App() {
             )}
 
             {/* Session stats — THIS topic's count only */}
-            <div style={{ margin:"0 14px 10px", padding:"14px", background:"#f8f7f4", borderRadius:"10px", border:"1px solid #e8e4dc" }}>
-              <div style={{ fontFamily:"'DM Mono',monospace", fontSize:"9px", color:"#b0a898", letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:"10px" }}>{T.label} Session</div>
+            <div style={{ margin:"0 14px 10px", padding:"14px", background:TH.statsBox, borderRadius:"10px", border:`1px solid ${TH.border}` }}>
+              <div style={{ fontFamily:"'DM Mono',monospace", fontSize:"9px", color:TH.textFaint, letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:"10px" }}>{T.label} Session</div>
               <div style={{ display:"flex", gap:"20px" }}>
                 <div>
                   <div style={{ fontFamily:"'Lora',serif", fontSize:"28px", fontWeight:700, color:T.color, lineHeight:1 }}>{thisCnt}</div>
-                  <div style={{ fontFamily:"'DM Mono',monospace", fontSize:"9px", color:"#9ca3af", marginTop:"2px" }}>Queries here</div>
+                  <div style={{ fontFamily:"'DM Mono',monospace", fontSize:"9px", color:TH.textMuted, marginTop:"2px" }}>Queries here</div>
                 </div>
                 <div>
                   <div style={{ fontFamily:"'Lora',serif", fontSize:"28px", fontWeight:700, color:T.color, lineHeight:1 }}>{TOPICS.filter(t=>counts[t.id]>0).length}</div>
-                  <div style={{ fontFamily:"'DM Mono',monospace", fontSize:"9px", color:"#9ca3af", marginTop:"2px" }}>Topics used</div>
+                  <div style={{ fontFamily:"'DM Mono',monospace", fontSize:"9px", color:TH.textMuted, marginTop:"2px" }}>Topics used</div>
                 </div>
               </div>
             </div>
@@ -607,7 +662,7 @@ export default function App() {
             <button className="gh" onClick={clearThis} style={{ margin:"0 14px 6px", padding:"8px", borderRadius:"8px", background:"transparent", border:`1px solid ${T.color}33`, color:T.color, cursor:"pointer", fontSize:"11px", fontFamily:"'DM Mono',monospace", transition:"all .15s" }}>
               Clear {T.label} chat
             </button>
-            <button className="gh" onClick={clearAll} style={{ margin:"0 14px 18px", padding:"8px", borderRadius:"8px", background:"transparent", border:"1px solid #e8e4dc", color:"#9ca3af", cursor:"pointer", fontSize:"11px", fontFamily:"'DM Mono',monospace", transition:"all .15s" }}>
+            <button className="gh" onClick={clearAll} style={{ margin:"0 14px 18px", padding:"8px", borderRadius:"8px", background:"transparent", border:`1px solid ${TH.border}`, color:TH.textMuted, cursor:"pointer", fontSize:"11px", fontFamily:"'DM Mono',monospace", transition:"all .15s" }}>
               Clear all chats
             </button>
           </div>
@@ -617,40 +672,44 @@ export default function App() {
         <div style={{ flex:1, display:"flex", flexDirection:"column", overflow:"hidden" }}>
 
           {/* Topbar */}
-          <div style={{ padding:"0 24px", height:"62px", background:"#fff", borderBottom:"1px solid #e8e4dc", display:"flex", alignItems:"center", gap:"13px", boxShadow:"0 1px 6px rgba(0,0,0,.04)", flexShrink:0 }}>
+          <div style={{ padding:"0 24px", height:"62px", background:TH.topbar, borderBottom:`1px solid ${TH.border}`, display:"flex", alignItems:"center", gap:"13px", boxShadow:TH.shadow, flexShrink:0, transition:"background .3s" }}>
             {/* Sidebar toggle */}
-            <button className="gh" onClick={()=>setSidebar(s=>!s)} style={{ width:"34px", height:"34px", borderRadius:"8px", background:"transparent", border:"1px solid #e8e4dc", color:"#6b7280", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"15px", flexShrink:0, transition:"all .15s" }}>
+            <button className="gh" onClick={()=>setSidebar(s=>!s)} style={{ width:"34px", height:"34px", borderRadius:"8px", background:"transparent", border:`1px solid ${TH.border}`, color:TH.textMuted, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"15px", flexShrink:0, transition:"all .15s" }}>
               {sidebar?"‹":"☰"}
             </button>
             {/* Topic icon */}
             <div style={{ width:"36px", height:"36px", borderRadius:"50%", background:T.bg, border:`1.5px solid ${T.color}44`, display:"flex", alignItems:"center", justifyContent:"center", color:T.color, fontSize:"16px", fontWeight:800, flexShrink:0 }}>{T.icon}</div>
             {/* Title — flex:1 so it fills ALL remaining space, pushing buttons to the far right */}
             <div style={{ flex:1, minWidth:0 }}>
-              <div style={{ fontFamily:"'Lora',serif", fontWeight:600, fontSize:"15px", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>OmniBot — {T.label} Mode</div>
-              <div style={{ fontSize:"11px", color:"#6b7280", fontFamily:"'DM Mono',monospace", display:"flex", alignItems:"center", gap:"5px" }}>
+              <div style={{ fontFamily:"'Lora',serif", fontWeight:600, fontSize:"15px", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis", color:TH.text }}>OmniBot — {T.label} Mode</div>
+              <div style={{ fontSize:"11px", color:TH.textMuted, fontFamily:"'DM Mono',monospace", display:"flex", alignItems:"center", gap:"5px" }}>
                 <span style={{ width:"6px", height:"6px", borderRadius:"50%", background:"#10b981", display:"inline-block", flexShrink:0 }}/>
                 {T.label} only · Isolated history
               </div>
             </div>
             {/* Action buttons — sit flush at the far right, no gap */}
             <input ref={fileRef} type="file" accept="application/pdf" style={{ display:"none" }} onChange={onFile}/>
-            <button className="gh" onClick={()=>fileRef.current?.click()} style={{ padding:"7px 14px", borderRadius:"8px", background:pdfText?"#ecfdf5":"transparent", border:`1px solid ${pdfText?"#6ee7b7":"#e8e4dc"}`, color:pdfText?"#059669":"#6b7280", cursor:"pointer", fontSize:"12px", fontFamily:"'DM Mono',monospace", display:"flex", alignItems:"center", gap:"6px", flexShrink:0, transition:"all .15s" }}>
+            <button className="gh" onClick={()=>fileRef.current?.click()} style={{ padding:"7px 14px", borderRadius:"8px", background:pdfText?"#ecfdf5":"transparent", border:`1px solid ${pdfText?"#6ee7b7":TH.border}`, color:pdfText?"#059669":TH.textMuted, cursor:"pointer", fontSize:"12px", fontFamily:"'DM Mono',monospace", display:"flex", alignItems:"center", gap:"6px", flexShrink:0, transition:"all .15s" }}>
               📄 {pdfState==="loading"?"Reading…":pdfText?"PDF Active":"Upload PDF"}
             </button>
-            <button onClick={toggleMic} style={{ padding:"7px 14px", borderRadius:"8px", background:mic?"#fef2f2":"transparent", border:`1px solid ${mic?"#fca5a5":"#e8e4dc"}`, color:mic?"#dc2626":"#6b7280", cursor:"pointer", fontSize:"12px", fontFamily:"'DM Mono',monospace", display:"flex", alignItems:"center", gap:"6px", flexShrink:0, animation:mic?"_pulse 1.5s infinite":"none", transition:"all .15s" }}>
+            {/* Dark mode toggle */}
+            <button onClick={()=>setDark(d=>!d)} title={dark?"Switch to Light Mode":"Switch to Dark Mode"} style={{ width:"34px", height:"34px", borderRadius:"8px", background:"transparent", border:`1px solid ${TH.border}`, color:TH.textMuted, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"16px", flexShrink:0, transition:"all .15s" }}>
+              {dark ? "☀️" : "🌙"}
+            </button>
+            <button onClick={toggleMic} style={{ padding:"7px 14px", borderRadius:"8px", background:mic?"#fef2f2":"transparent", border:`1px solid ${mic?"#fca5a5":TH.border}`, color:mic?"#dc2626":TH.textMuted, cursor:"pointer", fontSize:"12px", fontFamily:"'DM Mono',monospace", display:"flex", alignItems:"center", gap:"6px", flexShrink:0, animation:mic?"_pulse 1.5s infinite":"none", transition:"all .15s" }}>
               🎙 {mic?"Listening…":"Voice"}
             </button>
           </div>
 
           {/* Chat area — renders msgs[topic], nothing else */}
-          <div style={{ flex:1, overflowY:"auto", padding:"26px 40px" }}>
+          <div style={{ flex:1, overflowY:"auto", padding:"26px 40px", background:TH.bg, transition:"background .3s" }}>
 
             {/* Topic banner */}
             <div style={{ marginBottom:"20px", padding:"10px 16px", borderRadius:"10px", background:T.bg, border:`1px solid ${T.color}22`, display:"flex", alignItems:"center", gap:"10px" }}>
               <span style={{ fontSize:"16px" }}>{T.icon}</span>
               <div>
                 <div style={{ fontSize:"11px", fontWeight:600, color:T.color, fontFamily:"'DM Mono',monospace", textTransform:"uppercase", letterSpacing:"0.08em" }}>{T.label} Mode · Isolated History</div>
-                <div style={{ fontSize:"11px", color:"#6b7280", marginTop:"1px" }}>
+                <div style={{ fontSize:"11px", color:TH.textMuted, marginTop:"1px" }}>
                   {thisCnt > 0
                     ? `${thisCnt} question${thisCnt>1?"s":""} in this topic. Other topics have their own separate history.`
                     : "No questions asked yet here. Each topic keeps its own history."}
@@ -661,34 +720,34 @@ export default function App() {
             {/* Suggestion chips — visible only before first question in this topic */}
             {thisCnt === 0 && (
               <div style={{ marginBottom:"26px" }}>
-                <div style={{ fontFamily:"'DM Mono',monospace", fontSize:"10px", color:"#b0a898", letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:"10px" }}>Try asking</div>
+                <div style={{ fontFamily:"'DM Mono',monospace", fontSize:"10px", color:TH.textFaint, letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:"10px" }}>Try asking</div>
                 <div style={{ display:"flex", flexWrap:"wrap", gap:"8px" }}>
                   {HINTS[topic].map((q,i)=>(
-                    <button key={i} className="sq" onClick={()=>send(q)} style={{ padding:"7px 15px", borderRadius:"20px", background:"#fff", border:"1px solid #e8e4dc", color:"#4b5563", cursor:"pointer", fontSize:"13px", transition:"all .15s" }}>{q}</button>
+                    <button key={i} className="sq" onClick={()=>send(q)} style={{ padding:"7px 15px", borderRadius:"20px", background:TH.bubble, border:`1px solid ${TH.border}`, color:TH.text, cursor:"pointer", fontSize:"13px", transition:"all .15s" }}>{q}</button>
                   ))}
                 </div>
               </div>
             )}
 
             {/* Only this topic's messages */}
-            {msgs.map((m,i) => <Bubble key={i} msg={m} color={T.color}/>)}
+            {msgs.map((m,i) => <Bubble key={i} msg={m} color={T.color} th={TH}/>)}
 
             {loading && (
               <div style={{ display:"flex", gap:"12px", marginBottom:"22px", animation:"_slide .28s ease-out" }}>
-                <div style={{ width:"34px", height:"34px", borderRadius:"50%", background:"#1a1a2e", display:"flex", alignItems:"center", justifyContent:"center", color:"#fff", fontFamily:"'Lora',serif", fontWeight:700, fontSize:"14px", flexShrink:0, marginTop:"2px" }}>Ω</div>
-                <div style={{ padding:"12px 18px", borderRadius:"4px 16px 16px 16px", background:"#fff", border:"1px solid #e8e4dc", boxShadow:"0 2px 12px rgba(0,0,0,.06)" }}><Dots/></div>
+                <div style={{ width:"34px", height:"34px", borderRadius:"50%", background:TH.botAvatar, display:"flex", alignItems:"center", justifyContent:"center", color:"#fff", fontFamily:"'Lora',serif", fontWeight:700, fontSize:"14px", flexShrink:0, marginTop:"2px" }}>Ω</div>
+                <div style={{ padding:"12px 18px", borderRadius:"4px 16px 16px 16px", background:TH.bubble, border:`1px solid ${TH.border}`, boxShadow:TH.bubbleShadow }}><Dots/></div>
               </div>
             )}
             <div ref={endRef}/>
           </div>
 
           {/* Input zone */}
-          <div style={{ padding:"14px 40px 18px", background:"#fff", borderTop:"1px solid #e8e4dc", flexShrink:0 }}>
+          <div style={{ padding:"14px 40px 18px", background:TH.inputZone, borderTop:`1px solid ${TH.border}`, flexShrink:0, transition:"background .3s" }}>
 
             {/* Quick topic strip — coloured dot if topic has history */}
             <div style={{ display:"flex", gap:"6px", marginBottom:"10px", flexWrap:"wrap" }}>
               {TOPICS.map(t=>(
-                <button key={t.id} onClick={()=>switchTopic(t.id)} style={{ padding:"4px 12px", borderRadius:"14px", background:topic===t.id?t.bg:"transparent", border:`1px solid ${topic===t.id?t.color+"44":"#e8e4dc"}`, color:topic===t.id?t.color:"#9ca3af", cursor:"pointer", fontSize:"11.5px", fontWeight:topic===t.id?600:400, transition:"all .15s", position:"relative" }}>
+                <button key={t.id} onClick={()=>switchTopic(t.id)} style={{ padding:"4px 12px", borderRadius:"14px", background:topic===t.id?t.bg:"transparent", border:`1px solid ${topic===t.id?t.color+"44":TH.border}`, color:topic===t.id?t.color:TH.textMuted, cursor:"pointer", fontSize:"11.5px", fontWeight:topic===t.id?600:400, transition:"all .15s", position:"relative" }}>
                   {t.icon} {t.label}
                   {counts[t.id]>0 && topic!==t.id && (
                     <span style={{ position:"absolute", top:"1px", right:"1px", width:"5px", height:"5px", borderRadius:"50%", background:t.color }}/>
@@ -697,7 +756,7 @@ export default function App() {
               ))}
             </div>
 
-            <div style={{ display:"flex", gap:"10px", alignItems:"flex-end", background:"#f8f7f4", border:"1.5px solid #e0dbd2", borderRadius:"14px", padding:"10px 12px", transition:"border-color .2s" }}
+            <div style={{ display:"flex", gap:"10px", alignItems:"flex-end", background:TH.inputBox, border:`1.5px solid ${TH.border}`, borderRadius:"14px", padding:"10px 12px", transition:"border-color .2s,background .3s" }}
               onFocusCapture={e=>e.currentTarget.style.borderColor=T.color+"70"}
               onBlurCapture={e=>e.currentTarget.style.borderColor="#e0dbd2"}
             >
@@ -709,15 +768,15 @@ export default function App() {
                 placeholder={pdfText?`Ask about your PDF in ${T.label} mode…`:`Ask a ${T.label.toLowerCase()} question… (Enter to send)`}
                 disabled={loading}
                 rows={1}
-                style={{ flex:1, background:"none", border:"none", color:"#1a1a2e", fontSize:"14px", lineHeight:"1.65", maxHeight:"130px", overflowY:"auto", caretColor:T.color }}
+                style={{ flex:1, background:"none", border:"none", color:TH.text, fontSize:"14px", lineHeight:"1.65", maxHeight:"130px", overflowY:"auto", caretColor:T.color }}
               />
               <button onClick={()=>send()} disabled={loading||!input.trim()} style={{ width:"38px", height:"38px", borderRadius:"10px", background:loading||!input.trim()?"#e8e4dc":T.color, border:"none", cursor:loading||!input.trim()?"not-allowed":"pointer", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"17px", flexShrink:0, color:loading||!input.trim()?"#b0a898":"#fff", transition:"all .15s", boxShadow:loading||!input.trim()?"none":`0 3px 12px ${T.color}44` }}>
                 ➤
               </button>
             </div>
 
-            <div style={{ textAlign:"center", marginTop:"7px", fontSize:"10px", color:"#c5bfb6", fontFamily:"'DM Mono',monospace", letterSpacing:"0.06em" }}>
-              OmniBot · {T.label} Mode · Groq LLaMA 3.3 70B · Final Year Project
+            <div style={{ textAlign:"center", marginTop:"7px", fontSize:"10px", color:TH.textFooter, fontFamily:"'DM Mono',monospace", letterSpacing:"0.06em" }}>
+              OmniBot · {T.label} Mode · Groq LLaMA 3.3 70B · Final Year Project · {dark?"🌙 Dark":"☀️ Light"}
             </div>
           </div>
         </div>
